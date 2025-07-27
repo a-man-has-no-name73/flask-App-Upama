@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import os
 from flask import Flask, request, render_template
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
@@ -64,11 +65,24 @@ def build_model_3x(input_shape=(9000, 1), num_classes=4):
 
 app = Flask(__name__)
 
-# Build the model and load your saved weights
-model = build_model_3x(input_shape=(9000, 1), num_classes=4)
+# Load the complete saved model with error handling
+try:
+    model_path = os.path.join(os.path.dirname(__file__), "fold1_model.keras")
+    model = tf.keras.models.load_model(model_path)
+    print(f"Model loaded successfully from {model_path}")
+except Exception as e:
+    print(f"Error loading model: {e}")
+    # Fallback: build model and try to load weights
+    model = build_model_3x(input_shape=(9000, 1), num_classes=4)
+    try:
+        model.load_weights(model_path)
+        print("Weights loaded successfully as fallback")
+    except Exception as e2:
+        print(f"Error loading weights: {e2}")
+        # Model will be uninitialized - you may want to handle this case
 ############################################################################################
 ############################################################################################
-model.load_weights("fold1_model.keras")   # change here
+# model.load_weights("fold1_model.keras")   # changed: now loading complete model
 ############################################################################################
 ############################################################################################
 class_names = ["W", "N1+REM", "N2", "N3+N4"]
